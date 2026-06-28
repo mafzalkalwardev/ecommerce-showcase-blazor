@@ -1,0 +1,138 @@
+@page "/"
+@using ECommerceShowcase.Models
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.JSInterop
+@using ECommerceShowcase.Data
+@inject ProductService ProductService
+@inject OrderService OrderService
+@inject CustomerService CustomerService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<h3 class="mb-4">Product Showcase</h3>
+
+<div class="row">
+    @foreach (var p in products)
+    {
+        <div class="col-sm-6 col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <img src="@p.ImageUrl" class="card-img-top" alt="@p.Name" />
+                <div class="card-body d-flex flex-column">
+                    <h5>@p.Name</h5>
+                    <p>Rs. @p.Price</p>
+                    <button class="btn btn-primary mt-auto" @onclick="(() => OpenOrderModal(p.Id))">Order Now</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">@modalProduct?.Name</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                @if (modalProduct != null)
+                {
+                    <EditForm Model="orderInput" OnValidSubmit="SubmitOrder">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <InputText class="form-control" @bind="orderInput.Name" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <InputText class="form-control" @bind="orderInput.Email" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <InputText class="form-control" @bind="orderInput.Address" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Contact Number</label>
+                            <InputText class="form-control" @bind="orderInput.ContactNumber" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <InputNumber class="form-control" @bind="orderInput.Quantity" />
+                        </div>
+
+                        <button class="btn btn-success w-100">
+                            Place Order ù Rs. @(modalProduct.Price * orderInput.Quantity)
+                        </button>
+
+                    </EditForm>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private List<Product> products = new();
+    private Product? modalProduct;
+    private OrderInput orderInput = new();
+
+    protected override void OnInitialized()
+    {
+        products = ProductService.GetProducts().ToList();
+    }
+
+    private async Task OpenOrderModal(int id)
+    {
+        modalProduct = ProductService.GetProductById(id);
+        orderInput = new OrderInput();
+
+        await JS.InvokeVoidAsync("eval",
+            "new bootstrap.Modal(document.getElementById('orderModal')).show();");
+    }
+
+    private void SubmitOrder()
+    {
+        if (modalProduct == null)
+            return;
+
+        var customer = new Customer
+        {
+            Name = orderInput.Name,
+            Email = orderInput.Email,
+            Address = orderInput.Address,
+            ContactNumber = orderInput.ContactNumber
+        };
+
+        var savedCustomer = CustomerService.SaveCustomer(customer);
+
+        OrderService.PlaceOrder(new Order
+        {
+            CustomerId4Digit = savedCustomer.CustomerId4Digit,
+            ProductId = modalProduct.Id,
+            ProductName = modalProduct.Name,
+            UnitPrice = modalProduct.Price,
+            Quantity = orderInput.Quantity
+        });
+
+        NavigationManager.NavigateTo("/orderconfirmed");
+    }
+
+    public class OrderInput
+    {
+        [Required] public string Name { get; set; } = "";
+        [Required, EmailAddress] public string Email { get; set; } = "";
+        [Required] public string Address { get; set; } = "";
+        [Required] public string ContactNumber { get; set; } = "";
+        [Range(1, 100)] public int Quantity { get; set; } = 1;
+    }
+}

@@ -1,0 +1,19 @@
+@page "/orders"
+@inject ECommerceShowcase.Data.OrderService OrderService
+
+<h3>Orders</h3>
+
+<table class="table">
+<thead><tr><th>Order ID</th><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
+<tbody>
+  @foreach(var o in OrderService.GetAllOrders())
+  {
+    <tr>
+      <td>@o.Id</td>
+      <td>@o.ProductName</td>
+      <td>@o.Quantity</td>
+      <td>Rs. @o.TotalPrice</td>
+    </tr>
+  }
+</tbody>
+</table>
