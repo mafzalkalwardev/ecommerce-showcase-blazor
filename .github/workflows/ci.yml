@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+      - run: dotnet restore ECommerceShowcase.csproj
+      - run: dotnet build ECommerceShowcase.csproj -c Release --no-restore

@@ -66,7 +66,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Quantity</label>
-                            <InputNumber class="form-control" @bind="orderInput.Quantity" />
+                            <InputNumber TValue="int" class="form-control" @bind-Value="orderInput.Quantity" />
                         </div>
 
                         <button class="btn btn-success w-100">
@@ -82,8 +82,8 @@
 
 
 @code {
-    private List<Product> products = new();
-    private Product? modalProduct;
+    private List<Models.Product> products = new();
+    private Models.Product? modalProduct;
     private OrderInput orderInput = new();
 
     protected override void OnInitialized()
